@@ -1,0 +1,27 @@
+name: Deploy
+
+on:
+  push:
+    branches: [feat/deploy]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 🚚 Get latest code
+        uses: actions/checkout@v7
+
+      - name: 📂 SSH run script
+        uses: appleboy/ssh-action@v1.2.5
+        with:
+          host: ${{ vars.AWS_HOST }}
+          username: ${{ vars.AWS_USER }}
+          password: ${{ secrets.AWS_PASSWORD }}
+          script: |
+            cd /app
+            git fetch origin
+            git reset --hard origin/main
