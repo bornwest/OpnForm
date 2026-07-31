@@ -42,6 +42,7 @@ services:
       timeout: 10s
       retries: 3
       start_period: 30s
+    ports: []
 
   api-scheduler:
     <<: *api-environment
@@ -60,7 +61,7 @@ services:
       timeout: 30s
       retries: 3
       start_period: 70s # Allow time for first scheduled run and cache write
-
+    ports: []
   ui:
     image: jhumanj/opnform-client:latest
     container_name: opnform-client
