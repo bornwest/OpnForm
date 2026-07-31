@@ -8,12 +8,7 @@ services:
     environment: &api-env
       APP_ENV: production
       # Database settings
-      DB_HOST: db
       REDIS_HOST: redis
-      DB_DATABASE: ${DB_DATABASE:-forge}
-      DB_USERNAME: ${DB_USERNAME:-forge}
-      DB_PASSWORD: ${DB_PASSWORD:-forge}
-      DB_CONNECTION: ${DB_CONNECTION:-pgsql}
       # PHP Configuration
       PHP_MEMORY_LIMIT: "1G"
       PHP_MAX_EXECUTION_TIME: "600"
@@ -22,8 +17,6 @@ services:
     env_file:
       - ./api/.env
     depends_on:
-      db:
-        condition: service_healthy
       redis:
         condition: service_healthy # Depend on redis being healthy too
     healthcheck:
@@ -32,6 +25,8 @@ services:
       timeout: 15s
       retries: 3
       start_period: 60s
+    ports:
+      - "127.0.0.1:8000:80"
 
   api-worker:
     <<: *api-environment
@@ -81,6 +76,8 @@ services:
       timeout: 10s
       retries: 3
       start_period: 45s
+    ports:
+      - "127.0.0.1:3000:3000"
 
   redis:
     image: redis:7
@@ -92,40 +89,6 @@ services:
       interval: 30s
       timeout: 5s
 
-  db:
-    image: postgres:16
-    container_name: opnform-db
-    environment:
-      POSTGRES_DB: ${DB_DATABASE:-forge}
-      POSTGRES_USER: ${DB_USERNAME:-forge}
-      POSTGRES_PASSWORD: ${DB_PASSWORD:-forge}
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U \"$${POSTGRES_USER}\" -d \"$${POSTGRES_DB}\""]
-      interval: 30s
-      timeout: 5s
-    volumes:
-      - postgres-data:/var/lib/postgresql/data
-
-  ingress:
-    image: nginx:1
-    container_name: opnform-ingress
-    volumes:
-      - ./docker/nginx.conf:/etc/nginx/templates/default.conf.template
-    ports:
-      - 80:80
-    environment:
-      - NGINX_MAX_BODY_SIZE=64m
-    depends_on:
-      api:
-        condition: service_started
-      ui:
-        condition: service_started
-    healthcheck:
-      test: ["CMD-SHELL", "nginx -t && curl -f http://localhost/ || exit 1"]
-      interval: 30s
-      timeout: 5s
-      retries: 3
-      start_period: 10s
 
 volumes:
   postgres-data:
